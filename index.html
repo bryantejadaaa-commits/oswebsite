@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>ISAP School Document Request System</title>
+
+<style>
+body {
+  font-family: Arial, sans-serif;
+  background: #f4f6f8;
+}
+
+.container {
+  max-width: 900px;
+  margin: 20px auto;
+  background: white;
+  padding: 20px;
+  border-radius: 10px;
+}
+
+h1, h2 {
+  text-align: center;
+}
+
+section {
+  margin-top: 30px;
+  padding-top: 20px;
+  border-top: 2px solid #eee;
+}
+
+label {
+  font-weight: bold;
+  display: block;
+  margin-top: 10px;
+}
+
+input, select, textarea, button {
+  width: 100%;
+  padding: 8px;
+  margin-top: 5px;
+}
+
+button {
+  background: #2563eb;
+  color: white;
+  border: none;
+  margin-top: 15px;
+  cursor: pointer;
+}
+
+button:hover {
+  background: #1e4fd1;
+}
+
+ul {
+  list-style: none;
+  padding: 0;
+}
+
+li {
+  background: #eef2ff;
+  margin-top: 10px;
+  padding: 10px;
+  border-radius: 6px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 15px;
+}
+
+th, td {
+  border: 1px solid #ddd;
+  padding: 8px;
+  text-align: center;
+}
+
+th {
+  background: #eef2ff;
+}
+
+.hidden {
+  display: none;
+}
+
+.status-pending {
+  color: orange;
+  font-weight: bold;
+}
+
+.status-approved {
+  color: green;
+  font-weight: bold;
+}
+
+#error {
+  color: red;
+  text-align: center;
+}
+.header-bg {
+  height: 150px; /* adjust height */
+  background-image: url("logo.png");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+  background-color: #ffffff;
+}
+.submit-btn {
+  background: #dc2626; 
+}
+
+.submit-btn:hover {
+  background: #b91c1c; 
+}
+.admin-login-btn {
+  background: #dc2626;  
+}
+
+.admin-login-btn:hover {
+  background: #b91c1c; 
+}
+
+</style>
+
+</head>
+
+<body>
+<div class="header-bg"></div>
+<div class="container">
+  <h1>ISAP School Document Request System</h1>
+
+  <!-- ================= STUDENT SECTION ================= -->
+  <section>
+    <h2> Student Request Form</h2>
+
+    <form id="requestForm">
+      <label>Student Name</label>
+      <input type="text" id="name" required>
+
+      <label>Student ID</label>
+      <input type="text" id="studentId" required>
+
+      <label>Document Type</label>
+      <select id="document" required>
+        <option value="">-- Select --</option>
+        <option>Assessment</option>
+        <option>Grades</option>
+        <option>Transcript of Records</option>
+        <option>Certificate of Enrollment</option>
+      </select>
+
+      <label>Purpose</label>
+      <textarea id="purpose" required></textarea>
+
+      <button type="submit" class="submit-btn">Submit Request</button>
+    </form>
+
+    <h3> My Requests</h3>
+    <ul id="studentRequests"></ul>
+  </section>
+
+  <!-- ================= ADMIN SECTION ================= -->
+  <section>
+    <h2>Admin Panel</h2>
+
+    <div id="adminLogin">
+      <input type="password" id="adminPassword" placeholder="Enter Admin Password">
+      <button onclick="adminLogin()" class="admin-login-btn">Login</button>
+      <p id="error"></p>
+    </div>
+
+    <div id="adminPanel" class="hidden">
+      <table>
+        <thead>
+          <tr>
+            <th>Student</th>
+            <th>Document</th>
+            <th>Purpose</th>
+            <th>Status</th>
+            <th>Release Date</th>
+          </tr>
+        </thead>
+        <tbody id="adminTable"></tbody>
+      </table>
+    </div>
+  </section>
+</div>
+
+<script>
+const ADMIN_PASSWORD = "AdminPassword";
+let requests = [];
+
+// ================= STUDENT LOGIC =================
+document.getElementById("requestForm").addEventListener("submit", function(e) {
+  e.preventDefault();
+
+  // FIX: Get values correctly (prevents undefined)
+  const studentName = document.getElementById("name").value;
+  const studentID = document.getElementById("studentId").value;
+  const documentType = document.getElementById("document").value;
+  const purposeText = document.getElementById("purpose").value;
+
+  const today = new Date();
+  const receivingDate = new Date();
+
+  requests.push({
+    name: studentName,
+    studentId: studentID,
+    document: documentType,
+    purpose: purposeText,
+    status: "Pending",
+    releaseDate: ""
+  });
+
+  this.reset();
+  renderStudent();
+  renderAdmin();
+});
+
+function renderStudent() {
+  const list = document.getElementById("studentRequests");
+  list.innerHTML = "";
+
+  requests.forEach(req => {
+    const li = document.createElement("li");
+    li.innerHTML = `
+      <strong>${req.name}</strong> (${req.studentId})<br>
+      Document: ${req.document}<br>
+      Status: <span class="${req.status === "Pending" ? "status-pending" : "status-approved"}">${req.status}</span><br>
+      Release Date: ${req.releaseDate || "To be announced"}
+    `;
+    list.appendChild(li);
+  });
+}
+
+// ================= ADMIN LOGIC =================
+function adminLogin() {
+  const enteredPass = document.getElementById("adminPassword").value;
+
+  if (enteredPass === ADMIN_PASSWORD) {
+    document.getElementById("adminLogin").classList.add("hidden");
+    document.getElementById("adminPanel").classList.remove("hidden");
+    renderAdmin();
+  } else {
+    document.getElementById("error").textContent = "Incorrect password";
+  }
+}
+
+function renderAdmin() {
+  const table = document.getElementById("adminTable");
+  table.innerHTML = "";
+
+  requests.forEach((req, index) => {
+    const row = document.createElement("tr");
+    row.innerHTML = `
+      <td>${req.name}<br>${req.studentId}</td>
+      <td>${req.document}</td>
+      <td>${req.purpose}</td>
+      <td>${req.status}</td>
+      <td>
+        <input type="date" onchange="setReleaseDate(${index}, this.value)">
+      </td>
+    `;
+    table.appendChild(row);
+  });
+}
+
+function setReleaseDate(index, date) {
+  requests[index].releaseDate = date;
+  requests[index].status = "Approved";
+  renderStudent();
+  renderAdmin();
+}
+</script>
+
+</body>
+</html>
